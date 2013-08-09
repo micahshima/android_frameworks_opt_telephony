@@ -27,13 +27,10 @@ import android.os.Message;
 import android.os.SystemProperties;
 
 import com.android.internal.telephony.CommandsInterface;
-import com.android.internal.telephony.uicc.IccFileHandler;
-import com.android.internal.telephony.uicc.IccRecords;
-import com.android.internal.telephony.uicc.IccUtils;
-import com.android.internal.telephony.uicc.UiccCard;
-import com.android.internal.telephony.uicc.UiccCardApplication;
-import com.android.internal.telephony.TelephonyProperties;
-
+import com.android.internal.telephony.IccFileHandler;
+import com.android.internal.telephony.IccRecords;
+import com.android.internal.telephony.UiccCard;
+import com.android.internal.telephony.UiccCardApplication;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
@@ -104,6 +101,9 @@ public class CatService extends Handler implements AppInterface {
     private static final int DEV_ID_KEYPAD      = 0x01;
     private static final int DEV_ID_UICC        = 0x81;
     private static final int DEV_ID_TERMINAL    = 0x82;
+    private static final int DEV_ID_NETWORK     = 0x83;
+
+    static final String STK_DEFAULT = "Defualt Message";
 
     // Samsung STK SEND_SMS
     static final int WAITING_SMS_RESULT = 2;
@@ -318,24 +318,11 @@ public class CatService extends Handler implements AppInterface {
             case RECEIVE_DATA:
             case SEND_DATA:
                 BIPClientParams cmd = (BIPClientParams) cmdParams;
-                /*
-                 * If the text mesg is null, need to send the response
-                 * back to the card in the following scenarios
-                 * - It has alpha ID tag with no Text Msg (or)
-                 * - If alphaUsrCnf is not set. In the above cases
-                 *   there should be no UI indication given to the user.
-                 */
-                boolean alphaUsrCnf = SystemProperties.getBoolean(
-                         TelephonyProperties.PROPERTY_ALPHA_USRCNF, false);
-                CatLog.d(this, "alphaUsrCnf: " + alphaUsrCnf + ", bHasAlphaId: " + cmd.mHasAlphaId);
-
-                if (( cmd.mTextMsg.text == null) && ( cmd.mHasAlphaId || !alphaUsrCnf)) {
+                if (cmd.bHasAlphaId && (cmd.textMsg.text == null)) {
                     CatLog.d(this, "cmd " + cmdParams.getCommandType() + " with null alpha id");
                     // If alpha length is zero, we just respond with OK.
                     if (isProactiveCmd) {
-                        sendTerminalResponse(cmdParams.mCmdDet, ResultCode.OK, false, 0, null);
-                    } else if (cmdParams.getCommandType() == CommandType.OPEN_CHANNEL) {
-                        mCmdIf.handleCallSetupRequestFromSim(true, null);
+                        sendTerminalResponse(cmdParams.cmdDet, ResultCode.OK, false, 0, null);
                     }
                     return;
                 }

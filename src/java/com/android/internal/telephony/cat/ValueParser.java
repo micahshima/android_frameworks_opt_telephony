@@ -18,10 +18,6 @@ package com.android.internal.telephony.cat;
 
 import com.android.internal.telephony.GsmAlphabet;
 import com.android.internal.telephony.cat.Duration.TimeUnit;
-import com.android.internal.telephony.TelephonyProperties;
-import com.android.internal.telephony.uicc.IccUtils;
-import android.os.SystemProperties;
-
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
@@ -287,34 +283,10 @@ abstract class ValueParser {
                     throw new ResultException(ResultCode.CMD_DATA_NOT_UNDERSTOOD);
                 }
             } else {
-                /*
-                 * NULL alpha identifier (length = 0)
-                 *
-                 * Alpha Identifier requirements for pro-active commands as
-                 * per 102.223 / 31.111, with NULL Alpha (len=0) ,
-                 * states that User Confirmation IS NOT required.
-                 * Hence do NOT return 'STK_DEFAULT' from here, instead return null
-                 */
-
-                CatLog.d("ValueParser", "NULL ALPHA id (length = 0) ");
-                return null;
+                return CatService.STK_DEFAULT;
             }
         } else {
-            /*
-             * No alpha identifier (ALPHA_ID) tag present in TLV.
-             *
-             * Per 3GPP specification 102.223,
-             * "if the alpha identifier is not provided by the UICC,
-             *  the terminal MAY give information to the user".
-             *
-             *  Configure the system property "persist.atel.noalpha.usrcnf"
-             *  to true to show default message
-             */
-            boolean alphaUsrCnf = SystemProperties.getBoolean(
-                    TelephonyProperties.PROPERTY_ALPHA_USRCNF, false);
-            CatLog.d("ValueParser",  "NO ALPHA id, " + "alphaUsrCnf: " + alphaUsrCnf);
-
-            return  alphaUsrCnf ? CatService.STK_DEFAULT : null;
+            return CatService.STK_DEFAULT;
         }
     }
 
